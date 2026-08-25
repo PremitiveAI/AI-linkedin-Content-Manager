@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Assignment Desk — LinkedIn Post Intake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#14182A;
+    --ink-panel:#1B2038;
+    --ink-line:#2C3355;
+    --ink-soft:#9BA3C2;
+    --paper:#F3EEE2;
+    --paper-dim:#E4DDC9;
+    --amber:#E7A33E;
+    --amber-dim:#B87F2C;
+    --green:#4C9A6A;
+    --red:#D9634F;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(231,163,62,0.05), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(76,154,106,0.04), transparent 45%);
+    pointer-events:none;
+  }
+
+  a{color:var(--amber);}
+
+  .masthead{
+    max-width:1180px;
+    margin:0 auto;
+    padding:44px 32px 20px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:24px;
+    border-bottom:1px solid var(--ink-line);
+  }
+  .masthead .brand{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--amber);
+  }
+  .masthead h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(28px,4vw,42px);
+    margin:6px 0 0;
+    letter-spacing:-0.01em;
+  }
+  .masthead .desk-meta{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-align:right;
+    line-height:1.7;
+  }
+  .masthead .desk-meta span{color:var(--paper);}
+
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:48px 32px 100px;
+    display:grid;
+    grid-template-columns:1.15fr 0.85fr;
+    gap:56px;
+    align-items:start;
+  }
+  @media (max-width:880px){
+    main{grid-template-columns:1fr; gap:40px;}
+  }
+
+  /* ---------- Form column ---------- */
+  .intro{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-size:17px;
+    line-height:1.55;
+    color:var(--paper-dim);
+    max-width:46ch;
+    margin:0 0 36px;
+  }
+  .field{margin-bottom:26px;}
+  .field label{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:9px;
+  }
+  .field label .num{color:var(--amber);}
+  .field input[type=text],
+  .field textarea,
+  .field select{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid var(--ink-line);
+    color:var(--paper);
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    padding:8px 2px 12px;
+    outline:none;
+    transition:border-color .2s ease;
+    appearance:none;
+    -webkit-appearance:none;
+  }
+  .field select{cursor:pointer;}
+  .field select option{background:var(--ink-panel); color:var(--paper); font-family:'Inter',sans-serif;}
+  .field input::placeholder,
+  .field textarea::placeholder{color:#4B527A; font-style:italic;}
+  .field input:focus,
+  .field textarea:focus,
+  .field select:focus{border-bottom-color:var(--amber);}
+  .select-wrap{position:relative;}
+  .select-wrap::after{
+    content:"▾";
+    position:absolute; right:2px; bottom:14px;
+    color:var(--amber); pointer-events:none; font-size:13px;
+  }
+
+  .field.config{
+    border:1px dashed var(--ink-line);
+    padding:14px 16px;
+    border-radius:var(--radius);
+    background:rgba(255,255,255,0.015);
+  }
+  .field.config label{margin-bottom:6px;}
+  .field.config input{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    padding:6px 2px 8px;
+  }
+  .field.config .hint{
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:8px;
+    line-height:1.5;
+  }
+
+  button.send{
+    appearance:none;
+    border:1px solid var(--amber);
+    background:transparent;
+    color:var(--amber);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    padding:15px 28px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    transition:background .18s ease, color .18s ease, transform .06s ease;
+  }
+  button.send:hover{background:var(--amber); color:var(--ink);}
+  button.send:active{transform:translateY(1px);}
+  button.send:disabled{opacity:.5; cursor:default; background:transparent; color:var(--amber);}
+  button.send .arrow{transition:transform .18s ease;}
+  button.send:hover .arrow{transform:translateX(4px);}
+
+  .status-line{
+    margin-top:16px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    min-height:16px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .status-line .dot{width:6px; height:6px; border-radius:50%; background:var(--ink-soft); flex:none;}
+  .status-line.ok .dot{background:var(--green);}
+  .status-line.ok{color:var(--green);}
+  .status-line.err .dot{background:var(--red);}
+  .status-line.err{color:var(--red);}
+  .status-line.pending .dot{background:var(--amber); animation:pulse 1s infinite;}
+  .status-line.pending{color:var(--amber);}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.25;}}
+
+  /* ---------- Ticket column ---------- */
+  .ticket-wrap{position:sticky; top:32px;}
+  .ticket{
+    background:var(--paper);
+    color:#1C1A14;
+    position:relative;
+    padding:30px 26px 26px;
+    font-family:'IBM Plex Mono',monospace;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.55);
+  }
+  .ticket::before, .ticket::after{
+    content:"";
+    position:absolute; left:0; right:0; height:14px;
+    background:
+      radial-gradient(circle 7px at 0 50%, transparent 6px, var(--paper) 7px) 0 0/28px 14px repeat-x;
+  }
+  .ticket::before{ top:-1px; }
+  .ticket::after{ bottom:-1px; transform:rotate(180deg); }
+
+  .ticket-row{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px;}
+  .ticket-row .label{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#8A8262;}
+  .ticket-row .value{font-size:12px; color:#1C1A14;}
+  .ticket-id{font-size:11px; color:#8A8262; letter-spacing:.08em; margin-bottom:4px;}
+  .ticket h2{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:22px;
+    margin:0 0 20px;
+    color:#1C1A14;
+    border-bottom:1px solid #D8CFAF;
+    padding-bottom:14px;
+  }
+
+  .ticket-field{margin-bottom:16px;}
+  .ticket-field .label{font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:#8A8262; margin-bottom:4px;}
+  .ticket-field .value{
+    font-family:'Fraunces',serif;
+    font-size:15px;
+    line-height:1.4;
+    color:#1C1A14;
+    min-height:1.4em;
+  }
+  .ticket-field .value.placeholder{color:#B7AF92; font-style:italic;}
+
+  .stamp{
+    position:absolute;
+    right:22px; top:96px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--amber-dim);
+    border:2px solid var(--amber-dim);
+    padding:6px 10px;
+    border-radius:3px;
+    transform:rotate(8deg) scale(0.85);
+    opacity:0;
+    transition:transform .35s cubic-bezier(.2,1.4,.4,1), opacity .2s ease;
+    pointer-events:none;
+  }
+  .stamp.show{opacity:.9; transform:rotate(8deg) scale(1);}
+  .stamp.ok{color:var(--green); border-color:var(--green);}
+  .stamp.err{color:var(--red); border-color:var(--red);}
+
+  footer{
+    max-width:1180px; margin:0 auto; padding:0 32px 60px;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div>
+    <div class="brand">Assignment Desk · Content Wire</div>
+    <h1>LinkedIn Intake</h1>
+  </div>
+  <div class="desk-meta">
+    DESK No. <span id="deskNo">—</span><br/>
+    STATUS <span id="deskStatus">Awaiting brief</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <p class="intro">File the brief below. The desk decides tone, hook, length, hashtags and image style — you just bring the story.</p>
+
+    <form id="intakeForm" novalidate>
+      <div class="field">
+        <label><span class="num">01</span> Topic</label>
+        <input type="text" id="topic" name="Topic" placeholder="What should the post be about?" required />
+      </div>
+
+      <div class="field">
+        <label><span class="num">02</span> Category</label>
+        <div class="select-wrap">
+          <select id="category" name="Category" required>
+            <option value="" disabled selected>Choose a beat</option>
+            <option>AI & Automation</option>
+            <option>Technology</option>
+            <option>Business</option>
+            <option>Entrepreneurship</option>
+            <option>Leadership</option>
+            <option>Productivity</option>
+            <option>Marketing</option>
+            <option>Sales</option>
+            <option>Career & Personal Growth</option>
+            <option>Software & Development</option>
+            <option>Startups</option>
+            <option>Digital Transformation</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label><span class="num">03</span> Target Audience</label>
+        <input type="text" id="audience" name="Target Audience" placeholder="Who is this for?" required />
+      </div>
+
+      <div class="field config">
+        <label>Wire endpoint (n8n webhook URL)</label>
+        <input type="text" id="webhookUrl" placeholder="https://your-n8n-instance.com/webhook/linkedin-content-request" />
+        <div class="hint">Saved locally in your browser. Point this at your n8n Webhook node's Production URL before filing.</div>
+      </div>
+
+      <button class="send" type="submit" id="sendBtn">
+        <span id="sendLabel">File to desk</span> <span class="arrow">→</span>
+      </button>
+      <div class="status-line" id="statusLine"><span class="dot"></span><span id="statusText">Not yet filed</span></div>
+    </form>
+  </section>
+
+  <section class="ticket-wrap">
+    <div class="ticket">
+      <div class="stamp" id="stamp">Sent</div>
+      <div class="ticket-id" id="ticketId">TICKET · —</div>
+      <h2>Wire Slip</h2>
+
+      <div class="ticket-field">
+        <div class="label">Topic</div>
+        <div class="value placeholder" id="pTopic">—</div>
+      </div>
+      <div class="ticket-field">
+        <div class="label">Category</div>
+        <div class="value placeholder" id="pCategory">—</div>
+      </div>
+      <div class="ticket-field">
+        <div class="label">Audience</div>
+        <div class="value placeholder" id="pAudience">—</div>
+      </div>
+
+      <div class="ticket-row" style="margin-top:24px; border-top:1px solid #D8CFAF; padding-top:14px;">
+        <span class="label">Filed</span>
+        <span class="value" id="pTime">—</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>Deploys as a static site — no build step. Configure the webhook URL above, or hardcode it in index.html.</footer>
+
+<script>
+(function(){
+  const form = document.getElementById('intakeForm');
+  const topic = document.getElementById('topic');
+  const category = document.getElementById('category');
+  const audience = document.getElementById('audience');
+  const webhookInput = document.getElementById('webhookUrl');
+  const sendBtn = document.getElementById('sendBtn');
+  const sendLabel = document.getElementById('sendLabel');
+  const statusLine = document.getElementById('statusLine');
+  const statusText = document.getElementById('statusText');
+  const stamp = document.getElementById('stamp');
+  const deskNo = document.getElementById('deskNo');
+  const deskStatus = document.getElementById('deskStatus');
+  const ticketId = document.getElementById('ticketId');
+
+  // ---- persist webhook url locally ----
+  const savedUrl = localStorage.getItem('ld_webhook_url');
+  if (savedUrl) webhookInput.value = savedUrl;
+  webhookInput.addEventListener('change', () => {
+    localStorage.setItem('ld_webhook_url', webhookInput.value.trim());
+  });
+
+  // ---- desk number: stable per browser ----
+  let n = localStorage.getItem('ld_desk_no');
+  if (!n) { n = String(Math.floor(1000 + Math.random() * 8999)); localStorage.setItem('ld_desk_no', n); }
+  deskNo.textContent = n;
+  ticketId.textContent = 'TICKET · #' + n;
+
+  // ---- live ticket preview ----
+  function setVal(el, text) {
+    if (text && text.trim()) { el.textContent = text; el.classList.remove('placeholder'); }
+    else { el.textContent = '—'; el.classList.add('placeholder'); }
+  }
+  topic.addEventListener('input', () => setVal(document.getElementById('pTopic'), topic.value));
+  category.addEventListener('change', () => setVal(document.getElementById('pCategory'), category.value));
+  audience.addEventListener('input', () => setVal(document.getElementById('pAudience'), audience.value));
+
+  function showStamp(kind, text) {
+    stamp.textContent = text;
+    stamp.className = 'stamp show' + (kind ? ' ' + kind : '');
+  }
+
+  function setStatus(kind, text) {
+    statusLine.className = 'status-line' + (kind ? ' ' + kind : '');
+    statusText.textContent = text;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const url = webhookInput.value.trim();
+    if (!topic.value.trim() || !category.value || !audience.value.trim()) {
+      setStatus('err', 'Fill in every field before filing.');
+      return;
+    }
+    if (!url) {
+      setStatus('err', 'Add the wire endpoint (webhook URL) first.');
+      webhookInput.focus();
+      return;
+    }
+
+    sendBtn.disabled = true;
+    sendLabel.textContent = 'Filing…';
+    setStatus('pending', 'Sending to the desk…');
+    deskStatus.textContent = 'Filing…';
+    document.getElementById('pTime').textContent = new Date().toLocaleString();
+
+    const payload = {
+      Topic: topic.value.trim(),
+      Category: category.value,
+      'Target Audience': audience.value.trim()
+    };
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error('Desk responded with ' + res.status);
+
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+
+      setStatus('ok', data.message || 'Received — the desk is working on it.');
+      deskStatus.textContent = 'Received';
+      showStamp('ok', 'Received');
+      form.reset();
+      setVal(document.getElementById('pTopic'), '');
+      setVal(document.getElementById('pCategory'), '');
+      setVal(document.getElementById('pAudience'), '');
+    } catch (err) {
+      setStatus('err', 'Could not reach the desk — ' + err.message);
+      deskStatus.textContent = 'Failed';
+      showStamp('err', 'Bounced');
+    } finally {
+      sendBtn.disabled = false;
+      sendLabel.textContent = 'File to desk';
+    }
+  });
+})();
+</script>
+</body>
+</html>

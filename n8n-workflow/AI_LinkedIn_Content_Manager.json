@@ -1,0 +1,1775 @@
+{
+  "name": "AI LinkedIn Content Manager",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "linkedin-content-request",
+        "responseMode": "onReceived",
+        "responseData": "={{ { \"status\": \"received\", \"message\": \"Your LinkedIn content request is being processed.\" } }}",
+        "options": {}
+      },
+      "id": "dcc4dafb-8453-401b-b9b5-c4277a159e04",
+      "name": "LinkedIn Content Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -20640,
+        5760
+      ],
+      "webhookId": "507ec80b-2b03-4f4d-9911-7aeb7c785d5e"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $input.item.json.body || $input.item.json;\nconst clean = (s) => (typeof s === 'string' ? s.replace(/[\\u0000-\\u001F\\u007F]/g, '').replace(/\\s+/g, ' ').trim() : '');\nconst topic = clean(raw['Topic'] || raw.topic);\nconst category = clean(raw['Category'] || raw.category);\nconst targetAudience = clean(raw['Target Audience'] || raw.targetAudience);\nconst allowed = [\n  'AI & Automation','Technology','Business','Entrepreneurship','Leadership',\n  'Productivity','Marketing','Sales','Career & Personal Growth',\n  'Software & Development','Startups','Digital Transformation'\n];\nlet isValid = true;\nlet validationError = '';\nif (!topic || topic.length < 3) {\n  isValid = false; validationError = 'Topic is missing or too short. Please provide a meaningful topic.';\n} else if (!allowed.includes(category)) {\n  isValid = false; validationError = 'Category is not from the predefined list.';\n} else if (!targetAudience || targetAudience.length < 2) {\n  isValid = false; validationError = 'Target audience is required.';\n}\nreturn { json: { topic, category, targetAudience, isValid, validationError } };"
+      },
+      "id": "6b70247b-f921-4a91-b0ab-8b0eb8ad3744",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -20416,
+        5760
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "valid",
+              "leftValue": "={{ $json.isValid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7e2431c8-8de7-4b9a-ad39-83a0360544f1",
+      "name": "Input Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -20192,
+        5760
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this LinkedIn post request.\nTopic: {{ $json.topic }}\nCategory: {{ $json.category }}\nAudience: {{ $json.targetAudience }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a LinkedIn content strategist. Return only compact strategy JSON. Set research_needed=true ONLY when the topic requires current information, statistics, recent developments, product/company/market updates, or technical facts that may have changed. For evergreen, opinion, educational, storytelling, leadership, productivity or experience-based topics set research_needed=false. Do NOT write the post."
+        }
+      },
+      "id": "42111682-e686-4861-8c67-bc1acfa903dc",
+      "name": "Content Strategist",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -19968,
+        5520
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "reasoningEffort": "low"
+        }
+      },
+      "id": "03e6286b-4201-4e03-ba90-7b8a7bc963dc",
+      "name": "Strategy Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -19952,
+        5744
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account (add your key)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"core_subject\":\"string\",\"audience_pain_point\":\"string\",\"content_angle\":\"string\",\"main_takeaway\":\"string\",\"recommended_format\":\"string\",\"hook_direction\":\"string\",\"research_needed\":false}",
+        "autoFix": true
+      },
+      "id": "6d9880e2-4b77-4afc-9cf6-dcb97f462d2e",
+      "name": "Strategy Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -19808,
+        5728
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "research",
+              "leftValue": "={{ String($json.output.research_needed).toLowerCase() }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cd3633e2-20de-4493-86cf-2ebbf829e81b",
+      "name": "Research Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -19600,
+        5584
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Research only what is needed to support a LinkedIn post.\nTopic: {{ $('Validate Input').item.json.topic }}\nAngle: {{ $('Content Strategist').item.json.output.content_angle }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a research assistant. Retrieve only the few facts relevant to the post. Return a compact fact sheet (max ~6 short factual bullet lines inside fact_sheet) plus the source URLs. Use only verifiable facts. NEVER invent statistics or citations. Do not paste entire articles."
+        }
+      },
+      "id": "c1e796f5-6e57-4eb1-97fa-6a5141c42464",
+      "name": "Research",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -19360,
+        5296
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {
+          "webSearch": {
+            "searchContextSize": "low"
+          }
+        },
+        "options": {
+          "reasoningEffort": "low"
+        }
+      },
+      "id": "b07deecb-e609-48f5-80f7-94891344df97",
+      "name": "Research Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -19408,
+        5520
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account (add your key)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"fact_sheet\":\"string\",\"sources\":[\"https://example.com\"]}",
+        "autoFix": true
+      },
+      "id": "578b7e5d-c9cd-4ad8-bb83-1d9c074bd524",
+      "name": "Research Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -19232,
+        5488
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "rs",
+              "name": "research_summary",
+              "type": "string",
+              "value": "={{ $json.output.fact_sheet }}"
+            },
+            {
+              "id": "src",
+              "name": "research_sources",
+              "type": "string",
+              "value": "={{ ($json.output.sources || []).join(', ') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "881e975c-271b-4237-9f36-f4089e96bbdf",
+      "name": "Research Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -19008,
+        5296
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write ONE complete LinkedIn post.\nTopic: {{ $('Validate Input').item.json.topic }}\nCategory: {{ $('Validate Input').item.json.category }}\nAudience: {{ $('Validate Input').item.json.targetAudience }}\nStrategy: {{ JSON.stringify($('Content Strategist').item.json.output) }}\nResearch (may be empty): {{ $json.research_summary }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert LinkedIn ghostwriter. Write in a natural professional voice with a strong opening hook, immediate value, short mobile-friendly paragraphs, audience-specific examples, useful insight (not generic statements) and a natural conclusion. Add a CTA only when appropriate. No unnecessary emojis, no excessive formatting, no fake statistics, no generic AI language, no clickbait, no repetition. Also return a small set (0-4) of highly relevant niche hashtags; return an empty array if hashtags add no distribution value. Never invent statistics."
+        }
+      },
+      "id": "d429e6cc-590a-44e7-a908-3d0ba2f7d93a",
+      "name": "Post Generator",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -18768,
+        5504
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "reasoningEffort": "low"
+        }
+      },
+      "id": "ba7e55b2-1b37-460a-8e02-2aea781fcd6c",
+      "name": "Post Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -18800,
+        5840
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account (add your key)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"post\":\"string\",\"hashtags\":[\"#Example\"]}",
+        "autoFix": true
+      },
+      "id": "736a3a6b-c555-466f-a7d3-dd81fea2571a",
+      "name": "Post Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -18624,
+        5744
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Convert this LinkedIn post into ONE concise image-generation prompt.\nPost: {{ $('Post Generator').item.json.output.post }}\nCategory: {{ $('Validate Input').item.json.category }}\nAudience: {{ $('Validate Input').item.json.targetAudience }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You write concise prompts for an image model. The visual must support the post core idea, be professional and LinkedIn-appropriate, visually clear, and match the topic/audience. Prefer editorial / modern business / conceptual illustration / premium professional design. Avoid generic stock-photo aesthetics, avoid excessive elements, avoid text inside the image. Keep the prompt short and optimized for an image model. Specify a clean background and strong visual hierarchy."
+        }
+      },
+      "id": "fcbba9ba-c4d3-4f4e-98ea-b5ab07d9bf32",
+      "name": "Image Concept",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -18464,
+        5248
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "reasoningEffort": "low"
+        }
+      },
+      "id": "38764baa-ef5e-468e-8b07-b130166cf0c5",
+      "name": "Concept Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -18448,
+        5472
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account (add your key)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"image_prompt\":\"string\"}",
+        "autoFix": true
+      },
+      "id": "29c2cfcc-452e-4033-a22c-b896b1a14116",
+      "name": "Concept Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -18320,
+        5472
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-image-1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-IMAGE-1-MINI"
+        },
+        "prompt": "={{ $('Image Concept').item.json.output.image_prompt }}",
+        "options": {
+          "size": "1024x1024"
+        }
+      },
+      "id": "ebaf81e8-43f2-4551-b3b7-daf98bde74a1",
+      "name": "Image Generation",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -18144,
+        5248
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account (add your key)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Review the LinkedIn post and image concept together.\nPost: {{ $('Post Generator').item.json.output.post }}\nImage concept: {{ $('Image Concept').item.json.output.image_prompt }}\nCategory: {{ $('Validate Input').item.json.category }}\nAudience: {{ $('Validate Input').item.json.targetAudience }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a strict LinkedIn content reviewer. Evaluate: topic relevance, category alignment, audience relevance, hook, value, clarity, originality, professionalism, LinkedIn readability, factual reliability, visual relevance, brand suitability and spam/clickbait risk. Return score (0-100), status (\"PASS\" when score>=80 with no meaningful issues, otherwise \"FAIL\"), a short issues array and a short required_changes array. Do NOT rewrite the post. Return empty arrays when there is nothing meaningful to change."
+        }
+      },
+      "id": "df5c84d7-3f19-4ae5-b322-63c50455890c",
+      "name": "Quality Review",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -17888,
+        5184
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "reasoningEffort": "low"
+        }
+      },
+      "id": "e78e1397-06f5-48a9-8ed1-965972e41441",
+      "name": "Review Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -17936,
+        5472
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account (add your key)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"score\":0,\"status\":\"PASS\",\"issues\":[\"string\"],\"required_changes\":[\"string\"]}",
+        "autoFix": true
+      },
+      "id": "4de1263c-cf4e-4a86-93da-e441e6071f7b",
+      "name": "Review Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -17808,
+        5360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "pass-status",
+              "leftValue": "={{ ($json.output.status || '').toString().trim().toUpperCase() }}",
+              "rightValue": "PASS",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "pass-score",
+              "leftValue": "={{ Number($json.output.score) }}",
+              "rightValue": 80,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "24f571cc-5d20-48cc-8540-b62510bb1480",
+      "name": "Review Passed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -17536,
+        5136
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fp",
+              "name": "final_post",
+              "type": "string",
+              "value": "={{ $('Post Generator').item.json.output.post }}"
+            },
+            {
+              "id": "ht",
+              "name": "hashtags",
+              "type": "string",
+              "value": "={{ ($('Post Generator').item.json.output.hashtags || []).join(' ') }}"
+            },
+            {
+              "id": "ct",
+              "name": "combined_text",
+              "type": "string",
+              "value": "={{ ($('Post Generator').item.json.output.post + '\\n\\n' + ($('Post Generator').item.json.output.hashtags || []).join(' ')).trim() }}"
+            },
+            {
+              "id": "iu",
+              "name": "image_url",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "cat",
+              "name": "category",
+              "type": "string",
+              "value": "={{ $('Validate Input').item.json.category }}"
+            },
+            {
+              "id": "aud",
+              "name": "targetAudience",
+              "type": "string",
+              "value": "={{ $('Validate Input').item.json.targetAudience }}"
+            },
+            {
+              "id": "top",
+              "name": "topic",
+              "type": "string",
+              "value": "={{ $('Validate Input').item.json.topic }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "01525dfb-7444-4563-8d1d-71722d18e83a",
+      "name": "Finalize (Original)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -16960,
+        5008
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": []
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d68c34e6-80a6-4309-a4de-548cf99d0571",
+      "name": "Current Content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -16736,
+        5136
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendPhoto",
+        "chatId": "={{ $vars.TELEGRAM_APPROVAL_CHAT_ID }}",
+        "binaryData": false,
+        "fileUrl": "={{ $json.image_url }}",
+        "caption": "=<b>LinkedIn Post Ready for Review</b>\nCategory: {{ $json.category }}\nAudience: {{ $json.targetAudience }}\n\n{{ $json.final_post }}\n\nHashtags: {{ $json.hashtags }}",
+        "additionalFields": {
+          "parse_mode": "HTML",
+          "reply_markup": "={{ JSON.stringify({ inline_keyboard: [[ { text: '\u2705 Approve & Publish', url: $execution.resumeUrl + '?action=approve' }, { text: '\ud83d\udd04 Regenerate', url: $execution.resumeUrl + '?action=regenerate' }, { text: '\u270f\ufe0f Edit', url: $execution.resumeUrl + '?action=edit&feedback=' + encodeURIComponent('Improve the hook and tighten the language') } ]] }) }}"
+        }
+      },
+      "id": "4500a2aa-d2dc-4391-8ccc-7d5c36ed1098",
+      "name": "Approval Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -16512,
+        4968
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_WITH_YOUR_TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram account (add your bot token)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "a",
+                    "leftValue": "={{ $json.query.action }}",
+                    "rightValue": "approve",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "approve"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "r",
+                    "leftValue": "={{ $json.query.action }}",
+                    "rightValue": "regenerate",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "regenerate"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "e",
+                    "leftValue": "={{ $json.query.action }}",
+                    "rightValue": "edit",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "edit"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a8d3a1e9-abc6-40e1-9c19-858c0655efee",
+      "name": "Approval Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -16288,
+        5104
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst imgItem = $('Image Generation').first();\nconst binary = (imgItem && imgItem.binary) || {};\nconst keys = Object.keys(binary);\nconst imageKey = binary.data ? 'data' : keys[0];\n\nif (!imageKey || !binary[imageKey]) {\n  throw new Error(\n    'Generated image binary was not found. Check the Image Generation node output.'\n  );\n}\n\nitem.binary = item.binary || {};\nitem.binary.data = binary[imageKey];\nitem.json.image_ready = true;\nitem.json.image_binary_property = 'data';\n\nreturn item;"
+      },
+      "id": "2852fc39-9fef-479c-927f-4d9018b0d9a3",
+      "name": "Download Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16096,
+        4944
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item;\nconst combinedText = $('Current Content').first().json.combined_text;\n\nif (!combinedText || !String(combinedText).trim()) {\n  throw new Error('Approved LinkedIn content is empty. Publishing was blocked.');\n}\n\nif (!item.binary || !item.binary.data) {\n  throw new Error('Approved image is missing. Publishing was blocked.');\n}\n\nreturn item;"
+      },
+      "id": "c054c70b-539d-4911-b637-5876a696f109",
+      "name": "Validate Approved Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -15904,
+        4832
+      ]
+    },
+    {
+      "parameters": {
+        "person": "h2GgiTtTsn",
+        "text": "={{ $('Current Content').item.json.combined_text }}",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {
+          "visibility": "PUBLIC"
+        }
+      },
+      "id": "97dbd91d-7123-4324-b2fa-2bf2fb0a09f1",
+      "name": "Publish to LinkedIn",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        -15712,
+        4784
+      ],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_LINKEDIN_CREDENTIAL_ID",
+          "name": "LinkedIn account (connect your profile)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "pid",
+              "name": "linkedin_post_id",
+              "type": "string",
+              "value": "={{ $json.urn }}"
+            },
+            {
+              "id": "st",
+              "name": "publication_status",
+              "type": "string",
+              "value": "PUBLISHED"
+            },
+            {
+              "id": "ts",
+              "name": "timestamp",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            },
+            {
+              "id": "top",
+              "name": "topic",
+              "type": "string",
+              "value": "={{ $('Current Content').item.json.topic }}"
+            },
+            {
+              "id": "cat",
+              "name": "category",
+              "type": "string",
+              "value": "={{ $('Current Content').item.json.category }}"
+            },
+            {
+              "id": "aud",
+              "name": "target_audience",
+              "type": "string",
+              "value": "={{ $('Current Content').item.json.targetAudience }}"
+            },
+            {
+              "id": "fp",
+              "name": "final_post",
+              "type": "string",
+              "value": "={{ $('Current Content').item.json.combined_text }}"
+            },
+            {
+              "id": "img",
+              "name": "image_reference",
+              "type": "string",
+              "value": "={{ $('Current Content').item.json.image_url }}"
+            },
+            {
+              "id": "ex",
+              "name": "execution_id",
+              "type": "string",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2a3dd74-7a73-455f-b9eb-9e1d44d8212b",
+      "name": "Log Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -15488,
+        4736
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status",
+              "name": "status",
+              "type": "string",
+              "value": "published"
+            },
+            {
+              "id": "msg",
+              "name": "message",
+              "type": "string",
+              "value": "=Your LinkedIn post is live.\nPost ID: {{ $json.linkedin_post_id }}\nPublished at: {{ $json.timestamp }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e711c87c-a26b-43ff-9069-f837e5f628da",
+      "name": "Published",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -15264,
+        4736
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status",
+              "name": "status",
+              "type": "string",
+              "value": "publish_failed"
+            },
+            {
+              "id": "msg",
+              "name": "message",
+              "type": "string",
+              "value": "Your content was approved but the image download or LinkedIn publishing step failed. Please retry."
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "2d5c43da-867b-423c-8faf-ae9b91878cd4",
+      "name": "Publish Failed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -15488,
+        4960
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Revise the post applying ONLY the requested change. Keep everything else unchanged. Do not regenerate the whole post.\nCurrent post: {{ $('Current Content').item.json.final_post }}\nCurrent hashtags: {{ $('Current Content').item.json.hashtags }}\nEdit instruction: {{ $json.query.feedback || 'Improve the hook and tighten the language.' }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a precise LinkedIn editor. Apply only the requested edit to the post text and hashtags. Preserve everything the user did not ask to change. Return post and hashtags only."
+        }
+      },
+      "id": "1996d7dc-0df2-4a95-a95a-f253878e6baf",
+      "name": "Editor",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -16064,
+        5216
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "reasoningEffort": "medium"
+        }
+      },
+      "id": "c1776642-90f2-479b-851f-dc057c5df1c4",
+      "name": "Editor Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -16048,
+        5440
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account (add your key)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"post\":\"string\",\"hashtags\":[\"#Example\"]}",
+        "autoFix": true
+      },
+      "id": "b1fadc14-75fc-4fb2-b87e-763306dfed04",
+      "name": "Editor Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -15920,
+        5440
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fp",
+              "name": "final_post",
+              "type": "string",
+              "value": "={{ $('Editor').item.json.output.post }}"
+            },
+            {
+              "id": "ht",
+              "name": "hashtags",
+              "type": "string",
+              "value": "={{ ($('Editor').item.json.output.hashtags || []).join(' ') }}"
+            },
+            {
+              "id": "ct",
+              "name": "combined_text",
+              "type": "string",
+              "value": "={{ ($('Editor').item.json.output.post + '\\n\\n' + ($('Editor').item.json.output.hashtags || []).join(' ')).trim() }}"
+            },
+            {
+              "id": "iu",
+              "name": "image_url",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "cat",
+              "name": "category",
+              "type": "string",
+              "value": "={{ $('Validate Input').item.json.category }}"
+            },
+            {
+              "id": "aud",
+              "name": "targetAudience",
+              "type": "string",
+              "value": "={{ $('Validate Input').item.json.targetAudience }}"
+            },
+            {
+              "id": "top",
+              "name": "topic",
+              "type": "string",
+              "value": "={{ $('Validate Input').item.json.topic }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7138ba95-7947-4f89-b176-8c4400dfda5f",
+      "name": "Finalize (Edited)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -15616,
+        5296
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Improve this LinkedIn post using ONLY the review feedback. Apply only necessary corrections, preserve the core idea, improve readability, remove filler, fix factual/grammar issues, strengthen weak sections and keep audience relevance. Do not rewrite a good post.\nCurrent post: {{ $('Post Generator').item.json.output.post }}\nCurrent hashtags: {{ ($('Post Generator').item.json.output.hashtags || []).join(' ') }}\nIssues: {{ JSON.stringify($('Quality Review').item.json.output.issues) }}\nRequired changes: {{ JSON.stringify($('Quality Review').item.json.output.required_changes) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a precise LinkedIn editor. Return the corrected post and hashtags only. Do not over-rewrite."
+        }
+      },
+      "id": "ff54ee8b-637f-4c28-837f-5a5c4ca797ff",
+      "name": "Final Optimizer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -17312,
+        5392
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "reasoningEffort": "low"
+        }
+      },
+      "id": "47cc607f-220c-4a80-9cdf-481bb98d5854",
+      "name": "Optimizer Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -17312,
+        5600
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account (add your key)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"post\":\"string\",\"hashtags\":[\"#Example\"]}",
+        "autoFix": true
+      },
+      "id": "92a4da05-4e36-4afd-bc8b-878ee99885cd",
+      "name": "Optimizer Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -17120,
+        5600
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fp",
+              "name": "final_post",
+              "type": "string",
+              "value": "={{ $('Final Optimizer').item.json.output.post }}"
+            },
+            {
+              "id": "ht",
+              "name": "hashtags",
+              "type": "string",
+              "value": "={{ ($('Final Optimizer').item.json.output.hashtags || []).join(' ') }}"
+            },
+            {
+              "id": "ct",
+              "name": "combined_text",
+              "type": "string",
+              "value": "={{ ($('Final Optimizer').item.json.output.post + '\\n\\n' + ($('Final Optimizer').item.json.output.hashtags || []).join(' ')).trim() }}"
+            },
+            {
+              "id": "iu",
+              "name": "image_url",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "cat",
+              "name": "category",
+              "type": "string",
+              "value": "={{ $('Validate Input').item.json.category }}"
+            },
+            {
+              "id": "aud",
+              "name": "targetAudience",
+              "type": "string",
+              "value": "={{ $('Validate Input').item.json.targetAudience }}"
+            },
+            {
+              "id": "top",
+              "name": "topic",
+              "type": "string",
+              "value": "={{ $('Validate Input').item.json.topic }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bdf420ea-2f52-4ef3-81ab-fe0531b34045",
+      "name": "Finalize (Optimized)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -16960,
+        5392
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status",
+              "name": "status",
+              "type": "string",
+              "value": "generation_failed"
+            },
+            {
+              "id": "msg",
+              "name": "message",
+              "type": "string",
+              "value": "A content or image generation step failed. No LinkedIn publication was attempted. Please try submitting again."
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "0f88dc9b-ce2d-4f7d-b0db-4447a41d463a",
+      "name": "Generation Failed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -17536,
+        5520
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "rs",
+              "name": "research_summary",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "src",
+              "name": "research_sources",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e8ec7c88-800e-4658-9709-3984c029823d",
+      "name": "No Research",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -19120,
+        5712
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status",
+              "name": "status",
+              "type": "string",
+              "value": "validation_failed"
+            },
+            {
+              "id": "msg",
+              "name": "message",
+              "type": "string",
+              "value": "={{ $json.validationError }}\n\nNo content was generated and no LinkedIn publication was attempted."
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c8b3e76c-9bc1-4b38-a191-89d7b3f609d7",
+      "name": "Validation Failed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -19904,
+        5920
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {
+          "webhookSuffix": "=approval"
+        }
+      },
+      "id": "b1f0a001-approval-wait-0001-000000000001",
+      "name": "Approval Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -16336,
+        5008
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Input Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input Valid?": {
+      "main": [
+        [
+          {
+            "node": "Content Strategist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Validation Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Strategist": {
+      "main": [
+        [
+          {
+            "node": "Research Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Strategy Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Content Strategist",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Strategy Schema",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Strategy Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Content Strategist",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Needed?": {
+      "main": [
+        [
+          {
+            "node": "Research",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research": {
+      "main": [
+        [
+          {
+            "node": "Research Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Research",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Research Schema",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Research",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Summary": {
+      "main": [
+        [
+          {
+            "node": "Post Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Generator": {
+      "main": [
+        [
+          {
+            "node": "Image Concept",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generation Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Post Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Post Schema",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Post Generator",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Concept": {
+      "main": [
+        [
+          {
+            "node": "Image Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Concept Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Image Concept",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Concept Schema",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Concept Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Image Concept",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Generation": {
+      "main": [
+        [
+          {
+            "node": "Quality Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generation Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Review": {
+      "main": [
+        [
+          {
+            "node": "Review Passed?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generation Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Quality Review",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Review Schema",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Quality Review",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Passed?": {
+      "main": [
+        [
+          {
+            "node": "Finalize (Original)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Final Optimizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize (Original)": {
+      "main": [
+        [
+          {
+            "node": "Current Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Current Content": {
+      "main": [
+        [
+          {
+            "node": "Approval Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval Action": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post Generator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Editor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Validate Approved Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Approved Payload": {
+      "main": [
+        [
+          {
+            "node": "Publish to LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish to LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publish Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Result": {
+      "main": [
+        [
+          {
+            "node": "Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Editor": {
+      "main": [
+        [
+          {
+            "node": "Finalize (Edited)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Editor Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Editor",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Editor Schema",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Editor Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Editor",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize (Edited)": {
+      "main": [
+        [
+          {
+            "node": "Current Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Optimizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize (Optimized)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Optimizer Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Final Optimizer",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Optimizer Schema",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Optimizer Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Final Optimizer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize (Optimized)": {
+      "main": [
+        [
+          {
+            "node": "Current Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Research": {
+      "main": [
+        [
+          {
+            "node": "Post Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Content Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval Telegram": {
+      "main": [
+        [
+          {
+            "node": "Approval Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval Wait": {
+      "main": [
+        [
+          {
+            "node": "Approval Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "nodeGroups": [],
+  "tags": []
+}
