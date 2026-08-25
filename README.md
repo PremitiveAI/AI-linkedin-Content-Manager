@@ -2,13 +2,13 @@
 
 An n8n workflow that turns a short brief (topic, category, audience) into a
 researched, written, and image-illustrated LinkedIn post — held for human
-approval over Telegram before it publishes.
+approval over Gmail before it publishes.
 
 ```
 Wire Ticket (site/)  --POST-->  Webhook  -->  Validate  -->  Strategy
                                                                  |
                                                                  v
-                              Publish <-- Approval (Telegram) <-- Research -> Draft -> Review -> Image
+                              Publish <-- Approval (Gmail) <-- Research -> Draft -> Review -> Image
 ```
 
 **Repo contents:**
@@ -30,7 +30,8 @@ Wire Ticket (site/)  --POST-->  Webhook  -->  Validate  -->  Strategy
 3. **Activate the workflow** and copy the Webhook node's Production URL.
 4. **Deploy `site/` to Netlify** — see [`docs/DEPLOY_NETLIFY.md`](docs/DEPLOY_NETLIFY.md).
 5. Open the deployed site, paste the webhook URL into the "Wire endpoint" field,
-   and file a brief. Approve or reject it from Telegram when it lands.
+   and file a brief. Approve, regenerate, or edit it from the Gmail approval
+   email when it lands.
 
 Full logic walkthrough: [`docs/WORKFLOW.md`](docs/WORKFLOW.md).
 # AI-linkedin-Content-Manager

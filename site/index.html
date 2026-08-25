@@ -97,6 +97,51 @@
     max-width:46ch;
     margin:0 0 36px;
   }
+  .setup-steps{
+    list-style:none;
+    counter-reset:step;
+    margin:0 0 40px;
+    padding:0;
+    border:1px dashed var(--ink-line);
+    border-radius:var(--radius);
+    background:rgba(255,255,255,0.015);
+  }
+  .setup-steps li{
+    counter-increment:step;
+    position:relative;
+    padding:14px 18px 14px 52px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    line-height:1.55;
+    color:var(--ink-soft);
+    border-bottom:1px solid var(--ink-line);
+  }
+  .setup-steps li:last-child{border-bottom:none;}
+  .setup-steps li::before{
+    content:counter(step);
+    position:absolute;
+    left:16px; top:14px;
+    width:22px; height:22px;
+    border:1px solid var(--amber-dim);
+    color:var(--amber);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+  }
+  .setup-steps .step-title{
+    color:var(--paper);
+    font-weight:600;
+  }
+  .setup-steps code{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--amber);
+    background:rgba(231,163,62,0.08);
+    padding:1px 5px;
+    border-radius:2px;
+  }
+
   .field{margin-bottom:26px;}
   .field label{
     display:flex;
@@ -286,6 +331,16 @@
 <main>
   <section>
     <p class="intro">File the brief below. The desk decides tone, hook, length, hashtags and image style — you just bring the story.</p>
+
+    <ol class="setup-steps">
+      <li><span class="step-title">Import the workflow</span> — in n8n: Workflows → Import from File → <code>n8n-workflow/AI_LinkedIn_Content_Manager.json</code>.</li>
+      <li><span class="step-title">Add your OpenAI credential</span> — Credentials → Add Credential → OpenAI, then select it on the 8 model nodes n8n flags on import.</li>
+      <li><span class="step-title">Connect your Gmail account</span> — Credentials → Add Credential → Gmail OAuth2, sign in, then open the <code>Approval Gmail</code> node and select it. Set <code>sendTo</code> to the address that should approve posts.</li>
+      <li><span class="step-title">Connect LinkedIn</span> — Credentials → Add Credential → LinkedIn OAuth2 API, then select it on <code>Publish to LinkedIn</code>.</li>
+      <li><span class="step-title">Activate the workflow</span> — toggle Active (top right), then open the Webhook node and copy its Production URL.</li>
+      <li><span class="step-title">Wire this page to it</span> — paste that URL into "Wire endpoint" below and file a brief.</li>
+      <li><span class="step-title">Approve from your inbox</span> — each generated post arrives by email with Approve / Regenerate / Edit links; clicking one resumes the workflow.</li>
+    </ol>
 
     <form id="intakeForm" novalidate>
       <div class="field">

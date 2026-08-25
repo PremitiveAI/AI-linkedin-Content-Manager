@@ -5,17 +5,15 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "linkedin-content-request",
-        "responseMode": "onReceived",
-        "responseData": "={{ { \"status\": \"received\", \"message\": \"Your LinkedIn content request is being processed.\" } }}",
         "options": {}
       },
-      "id": "dcc4dafb-8453-401b-b9b5-c4277a159e04",
+      "id": "b29e033a-04ed-4af2-afc8-a6221cef5987",
       "name": "LinkedIn Content Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -20640,
-        5760
+        -5152,
+        1024
       ],
       "webhookId": "507ec80b-2b03-4f4d-9911-7aeb7c785d5e"
     },
@@ -24,13 +22,13 @@
         "mode": "runOnceForEachItem",
         "jsCode": "const raw = $input.item.json.body || $input.item.json;\nconst clean = (s) => (typeof s === 'string' ? s.replace(/[\\u0000-\\u001F\\u007F]/g, '').replace(/\\s+/g, ' ').trim() : '');\nconst topic = clean(raw['Topic'] || raw.topic);\nconst category = clean(raw['Category'] || raw.category);\nconst targetAudience = clean(raw['Target Audience'] || raw.targetAudience);\nconst allowed = [\n  'AI & Automation','Technology','Business','Entrepreneurship','Leadership',\n  'Productivity','Marketing','Sales','Career & Personal Growth',\n  'Software & Development','Startups','Digital Transformation'\n];\nlet isValid = true;\nlet validationError = '';\nif (!topic || topic.length < 3) {\n  isValid = false; validationError = 'Topic is missing or too short. Please provide a meaningful topic.';\n} else if (!allowed.includes(category)) {\n  isValid = false; validationError = 'Category is not from the predefined list.';\n} else if (!targetAudience || targetAudience.length < 2) {\n  isValid = false; validationError = 'Target audience is required.';\n}\nreturn { json: { topic, category, targetAudience, isValid, validationError } };"
       },
-      "id": "6b70247b-f921-4a91-b0ab-8b0eb8ad3744",
+      "id": "6b292272-d13a-447d-9d27-3a65d2507de5",
       "name": "Validate Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -20416,
-        5760
+        -4928,
+        1024
       ]
     },
     {
@@ -58,13 +56,13 @@
         },
         "options": {}
       },
-      "id": "7e2431c8-8de7-4b9a-ad39-83a0360544f1",
+      "id": "7e1061d2-67ee-4a27-9670-caea8d0f5135",
       "name": "Input Valid?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -20192,
-        5760
+        -4704,
+        1024
       ]
     },
     {
@@ -76,13 +74,13 @@
           "systemMessage": "You are a LinkedIn content strategist. Return only compact strategy JSON. Set research_needed=true ONLY when the topic requires current information, statistics, recent developments, product/company/market updates, or technical facts that may have changed. For evergreen, opinion, educational, storytelling, leadership, productivity or experience-based topics set research_needed=false. Do NOT write the post."
         }
       },
-      "id": "42111682-e686-4861-8c67-bc1acfa903dc",
+      "id": "1026295f-a6e4-43ec-821c-e653b7938a28",
       "name": "Content Strategist",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -19968,
-        5520
+        -4480,
+        784
       ]
     },
     {
@@ -97,18 +95,18 @@
           "reasoningEffort": "low"
         }
       },
-      "id": "03e6286b-4201-4e03-ba90-7b8a7bc963dc",
+      "id": "1e270d14-0341-42e2-a98e-f742f31bda20",
       "name": "Strategy Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -19952,
-        5744
+        -4512,
+        1008
       ],
       "credentials": {
         "openAiApi": {
           "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
-          "name": "OpenAI account (add your key)"
+          "name": "OpenAI account"
         }
       }
     },
@@ -117,13 +115,13 @@
         "jsonSchemaExample": "{\"core_subject\":\"string\",\"audience_pain_point\":\"string\",\"content_angle\":\"string\",\"main_takeaway\":\"string\",\"recommended_format\":\"string\",\"hook_direction\":\"string\",\"research_needed\":false}",
         "autoFix": true
       },
-      "id": "6d9880e2-4b77-4afc-9cf6-dcb97f462d2e",
+      "id": "ca084db7-6e19-4632-aaa8-19f8449a5440",
       "name": "Strategy Schema",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        -19808,
-        5728
+        -4320,
+        992
       ]
     },
     {
@@ -150,13 +148,13 @@
         },
         "options": {}
       },
-      "id": "cd3633e2-20de-4493-86cf-2ebbf829e81b",
+      "id": "be6fc4b0-4913-43e6-9ffa-2a42f713b497",
       "name": "Research Needed?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -19600,
-        5584
+        -4112,
+        848
       ]
     },
     {
@@ -168,13 +166,13 @@
           "systemMessage": "You are a research assistant. Retrieve only the few facts relevant to the post. Return a compact fact sheet (max ~6 short factual bullet lines inside fact_sheet) plus the source URLs. Use only verifiable facts. NEVER invent statistics or citations. Do not paste entire articles."
         }
       },
-      "id": "c1e796f5-6e57-4eb1-97fa-6a5141c42464",
+      "id": "0f37e0a5-d0fc-4c6f-a2fd-0f7b9796fbfc",
       "name": "Research",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -19360,
-        5296
+        -3872,
+        560
       ]
     },
     {
@@ -193,18 +191,18 @@
           "reasoningEffort": "low"
         }
       },
-      "id": "b07deecb-e609-48f5-80f7-94891344df97",
+      "id": "cbfa1ca3-0a96-43ae-a0c0-b6e6303da82b",
       "name": "Research Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -19408,
-        5520
+        -3920,
+        784
       ],
       "credentials": {
         "openAiApi": {
           "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
-          "name": "OpenAI account (add your key)"
+          "name": "OpenAI account"
         }
       }
     },
@@ -213,13 +211,13 @@
         "jsonSchemaExample": "{\"fact_sheet\":\"string\",\"sources\":[\"https://example.com\"]}",
         "autoFix": true
       },
-      "id": "578b7e5d-c9cd-4ad8-bb83-1d9c074bd524",
+      "id": "5f74d518-1c0a-41e9-9ff0-164fb9ee7571",
       "name": "Research Schema",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        -19232,
-        5488
+        -3744,
+        752
       ]
     },
     {
@@ -242,13 +240,13 @@
         },
         "options": {}
       },
-      "id": "881e975c-271b-4237-9f36-f4089e96bbdf",
+      "id": "d75e8452-3cff-4e9a-8e86-66b5faea3e5a",
       "name": "Research Summary",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        -19008,
-        5296
+        -3520,
+        560
       ]
     },
     {
@@ -260,13 +258,13 @@
           "systemMessage": "You are an expert LinkedIn ghostwriter. Write in a natural professional voice with a strong opening hook, immediate value, short mobile-friendly paragraphs, audience-specific examples, useful insight (not generic statements) and a natural conclusion. Add a CTA only when appropriate. No unnecessary emojis, no excessive formatting, no fake statistics, no generic AI language, no clickbait, no repetition. Also return a small set (0-4) of highly relevant niche hashtags; return an empty array if hashtags add no distribution value. Never invent statistics."
         }
       },
-      "id": "d429e6cc-590a-44e7-a908-3d0ba2f7d93a",
+      "id": "1cf32655-b78f-4cbf-83c7-57849974a2be",
       "name": "Post Generator",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -18768,
-        5504
+        -3280,
+        768
       ],
       "onError": "continueErrorOutput"
     },
@@ -282,18 +280,18 @@
           "reasoningEffort": "low"
         }
       },
-      "id": "ba7e55b2-1b37-460a-8e02-2aea781fcd6c",
+      "id": "25428019-5bf3-49b4-9b5c-dd74a61be2cb",
       "name": "Post Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -18800,
-        5840
+        -3312,
+        1104
       ],
       "credentials": {
         "openAiApi": {
           "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
-          "name": "OpenAI account (add your key)"
+          "name": "OpenAI account"
         }
       }
     },
@@ -302,13 +300,13 @@
         "jsonSchemaExample": "{\"post\":\"string\",\"hashtags\":[\"#Example\"]}",
         "autoFix": true
       },
-      "id": "736a3a6b-c555-466f-a7d3-dd81fea2571a",
+      "id": "6ca57126-7c26-4d82-9267-dd13d65b2e65",
       "name": "Post Schema",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        -18624,
-        5744
+        -3136,
+        1008
       ]
     },
     {
@@ -320,13 +318,13 @@
           "systemMessage": "You write concise prompts for an image model. The visual must support the post core idea, be professional and LinkedIn-appropriate, visually clear, and match the topic/audience. Prefer editorial / modern business / conceptual illustration / premium professional design. Avoid generic stock-photo aesthetics, avoid excessive elements, avoid text inside the image. Keep the prompt short and optimized for an image model. Specify a clean background and strong visual hierarchy."
         }
       },
-      "id": "fcbba9ba-c4d3-4f4e-98ea-b5ab07d9bf32",
+      "id": "93c18a78-a2a2-4b7f-bbb9-be23c5763333",
       "name": "Image Concept",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -18464,
-        5248
+        -2976,
+        512
       ]
     },
     {
@@ -341,18 +339,18 @@
           "reasoningEffort": "low"
         }
       },
-      "id": "38764baa-ef5e-468e-8b07-b130166cf0c5",
+      "id": "97274ab6-b637-4de3-9749-947e9e109a7b",
       "name": "Concept Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -18448,
-        5472
+        -2960,
+        736
       ],
       "credentials": {
         "openAiApi": {
           "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
-          "name": "OpenAI account (add your key)"
+          "name": "OpenAI account"
         }
       }
     },
@@ -361,13 +359,13 @@
         "jsonSchemaExample": "{\"image_prompt\":\"string\"}",
         "autoFix": true
       },
-      "id": "29c2cfcc-452e-4033-a22c-b896b1a14116",
+      "id": "1383063b-e375-4d33-b5ce-ff6820d1dd9c",
       "name": "Concept Schema",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        -18320,
-        5472
+        -2832,
+        736
       ]
     },
     {
@@ -384,18 +382,18 @@
           "size": "1024x1024"
         }
       },
-      "id": "ebaf81e8-43f2-4551-b3b7-daf98bde74a1",
+      "id": "a9ebb925-d895-41bb-b30d-1843ee99f951",
       "name": "Image Generation",
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
       "position": [
-        -18144,
-        5248
+        -2656,
+        512
       ],
       "credentials": {
         "openAiApi": {
           "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
-          "name": "OpenAI account (add your key)"
+          "name": "OpenAI account"
         }
       },
       "onError": "continueErrorOutput"
@@ -409,13 +407,13 @@
           "systemMessage": "You are a strict LinkedIn content reviewer. Evaluate: topic relevance, category alignment, audience relevance, hook, value, clarity, originality, professionalism, LinkedIn readability, factual reliability, visual relevance, brand suitability and spam/clickbait risk. Return score (0-100), status (\"PASS\" when score>=80 with no meaningful issues, otherwise \"FAIL\"), a short issues array and a short required_changes array. Do NOT rewrite the post. Return empty arrays when there is nothing meaningful to change."
         }
       },
-      "id": "df5c84d7-3f19-4ae5-b322-63c50455890c",
+      "id": "91202c52-a486-4301-a3a7-8a951c436897",
       "name": "Quality Review",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -17888,
-        5184
+        -2400,
+        448
       ],
       "onError": "continueErrorOutput"
     },
@@ -431,18 +429,18 @@
           "reasoningEffort": "low"
         }
       },
-      "id": "e78e1397-06f5-48a9-8ed1-965972e41441",
+      "id": "e65f7aa0-e58c-416c-ac76-7210f77fc96f",
       "name": "Review Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -17936,
-        5472
+        -2448,
+        736
       ],
       "credentials": {
         "openAiApi": {
           "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
-          "name": "OpenAI account (add your key)"
+          "name": "OpenAI account"
         }
       }
     },
@@ -451,13 +449,13 @@
         "jsonSchemaExample": "{\"score\":0,\"status\":\"PASS\",\"issues\":[\"string\"],\"required_changes\":[\"string\"]}",
         "autoFix": true
       },
-      "id": "4de1263c-cf4e-4a86-93da-e441e6071f7b",
+      "id": "c93cbae9-2a69-417b-a390-ee5cb8ebaae3",
       "name": "Review Schema",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        -17808,
-        5360
+        -2320,
+        624
       ]
     },
     {
@@ -493,13 +491,13 @@
         },
         "options": {}
       },
-      "id": "24f571cc-5d20-48cc-8540-b62510bb1480",
+      "id": "ae82dcd6-b6ef-43b9-a73a-d75b099b4d4d",
       "name": "Review Passed?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -17536,
-        5136
+        -2048,
+        400
       ]
     },
     {
@@ -552,13 +550,13 @@
         },
         "options": {}
       },
-      "id": "01525dfb-7444-4563-8d1d-71722d18e83a",
+      "id": "fc75c532-8ef6-44c6-838c-65468073fc02",
       "name": "Finalize (Original)",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        -16960,
-        5008
+        -1472,
+        272
       ]
     },
     {
@@ -569,42 +567,53 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "d68c34e6-80a6-4309-a4de-548cf99d0571",
+      "id": "6d0472a8-87e7-4df6-bd3d-cf9eae79261c",
       "name": "Current Content",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        -16736,
-        5136
+        -1248,
+        400
       ]
     },
     {
       "parameters": {
-        "resource": "message",
-        "operation": "sendPhoto",
-        "chatId": "={{ $vars.TELEGRAM_APPROVAL_CHAT_ID }}",
-        "binaryData": false,
-        "fileUrl": "={{ $json.image_url }}",
-        "caption": "=<b>LinkedIn Post Ready for Review</b>\nCategory: {{ $json.category }}\nAudience: {{ $json.targetAudience }}\n\n{{ $json.final_post }}\n\nHashtags: {{ $json.hashtags }}",
-        "additionalFields": {
-          "parse_mode": "HTML",
-          "reply_markup": "={{ JSON.stringify({ inline_keyboard: [[ { text: '\u2705 Approve & Publish', url: $execution.resumeUrl + '?action=approve' }, { text: '\ud83d\udd04 Regenerate', url: $execution.resumeUrl + '?action=regenerate' }, { text: '\u270f\ufe0f Edit', url: $execution.resumeUrl + '?action=edit&feedback=' + encodeURIComponent('Improve the hook and tighten the language') } ]] }) }}"
-        }
+        "sendTo": "YOUR_APPROVAL_EMAIL@example.com",
+        "subject": "=New LinkedIn post awaiting approval \u2014 {{ $json.topic }}",
+        "emailType": "html",
+        "message": "=<p>New LinkedIn post awaiting approval</p><p><b>Topic:</b> {{ $json.topic }}<br><b>Category:</b> {{ $json.category }}<br><b>Audience:</b> {{ $json.targetAudience }}</p><hr><p>{{ $json.combined_text.replace(/\\n/g, '<br>') }}</p><hr><p><a href=\"{{ $execution.resumeUrl }}?action=approve\" style=\"background:#0a66c2;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;margin-right:8px;\">Approve</a> <a href=\"{{ $execution.resumeUrl }}?action=regenerate\" style=\"background:#666;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;margin-right:8px;\">Regenerate</a> <a href=\"{{ $execution.resumeUrl }}?action=edit\" style=\"background:#999;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;\">Edit</a></p>",
+        "options": {}
       },
-      "id": "4500a2aa-d2dc-4391-8ccc-7d5c36ed1098",
-      "name": "Approval Telegram",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
+      "id": "17908eff-e006-4504-a0a7-62fd3e8bbb41",
+      "name": "Approval Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
       "position": [
-        -16512,
-        4968
+        -1024,
+        240
       ],
+      "webhookId": "c2f46147-934b-4e2f-ad7c-f4803dba5422",
       "credentials": {
-        "telegramApi": {
-          "id": "REPLACE_WITH_YOUR_TELEGRAM_CREDENTIAL_ID",
-          "name": "Telegram account (add your bot token)"
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
         }
       }
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "id": "03da4fcf-a924-407b-a2c2-951b1c238f8c",
+      "name": "Approval Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -848,
+        176
+      ],
+      "webhookId": "361e3e9b-8563-4726-9133-32a4f1c2e263"
     },
     {
       "parameters": {
@@ -686,13 +695,13 @@
         },
         "options": {}
       },
-      "id": "a8d3a1e9-abc6-40e1-9c19-858c0655efee",
+      "id": "0f7b310b-3fe3-4e15-a859-548d80eaca58",
       "name": "Approval Action",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -16288,
-        5104
+        -800,
+        368
       ]
     },
     {
@@ -700,13 +709,13 @@
         "mode": "runOnceForEachItem",
         "jsCode": "const item = $input.item;\nconst imgItem = $('Image Generation').first();\nconst binary = (imgItem && imgItem.binary) || {};\nconst keys = Object.keys(binary);\nconst imageKey = binary.data ? 'data' : keys[0];\n\nif (!imageKey || !binary[imageKey]) {\n  throw new Error(\n    'Generated image binary was not found. Check the Image Generation node output.'\n  );\n}\n\nitem.binary = item.binary || {};\nitem.binary.data = binary[imageKey];\nitem.json.image_ready = true;\nitem.json.image_binary_property = 'data';\n\nreturn item;"
       },
-      "id": "2852fc39-9fef-479c-927f-4d9018b0d9a3",
+      "id": "57857e13-0612-48ce-8908-0dc76e0b3cb6",
       "name": "Download Image",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -16096,
-        4944
+        -608,
+        208
       ]
     },
     {
@@ -714,13 +723,13 @@
         "mode": "runOnceForEachItem",
         "jsCode": "const item = $input.item;\nconst combinedText = $('Current Content').first().json.combined_text;\n\nif (!combinedText || !String(combinedText).trim()) {\n  throw new Error('Approved LinkedIn content is empty. Publishing was blocked.');\n}\n\nif (!item.binary || !item.binary.data) {\n  throw new Error('Approved image is missing. Publishing was blocked.');\n}\n\nreturn item;"
       },
-      "id": "c054c70b-539d-4911-b637-5876a696f109",
+      "id": "a4fecffd-9eae-43de-bb6a-98b3644a4c98",
       "name": "Validate Approved Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -15904,
-        4832
+        -416,
+        96
       ]
     },
     {
@@ -732,18 +741,18 @@
           "visibility": "PUBLIC"
         }
       },
-      "id": "97dbd91d-7123-4324-b2fa-2bf2fb0a09f1",
+      "id": "39b5f375-0429-454c-83aa-ef877cd6825b",
       "name": "Publish to LinkedIn",
       "type": "n8n-nodes-base.linkedIn",
       "typeVersion": 1,
       "position": [
-        -15712,
-        4784
+        -224,
+        48
       ],
       "credentials": {
         "linkedInOAuth2Api": {
           "id": "REPLACE_WITH_YOUR_LINKEDIN_CREDENTIAL_ID",
-          "name": "LinkedIn account (connect your profile)"
+          "name": "LinkedIn account"
         }
       },
       "onError": "continueErrorOutput"
@@ -810,13 +819,13 @@
         },
         "options": {}
       },
-      "id": "b2a3dd74-7a73-455f-b9eb-9e1d44d8212b",
+      "id": "7165e3b6-f0d7-4ad7-b056-c4ea1536e700",
       "name": "Log Result",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        -15488,
-        4736
+        0,
+        0
       ]
     },
     {
@@ -840,13 +849,13 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "e711c87c-a26b-43ff-9069-f837e5f628da",
+      "id": "8865333b-cd78-4977-9955-eb13ecb1c82d",
       "name": "Published",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        -15264,
-        4736
+        224,
+        0
       ]
     },
     {
@@ -870,13 +879,13 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "2d5c43da-867b-423c-8faf-ae9b91878cd4",
+      "id": "e1746776-03e7-432f-9377-3d7c72458dbe",
       "name": "Publish Failed",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        -15488,
-        4960
+        0,
+        224
       ]
     },
     {
@@ -888,13 +897,13 @@
           "systemMessage": "You are a precise LinkedIn editor. Apply only the requested edit to the post text and hashtags. Preserve everything the user did not ask to change. Return post and hashtags only."
         }
       },
-      "id": "1996d7dc-0df2-4a95-a95a-f253878e6baf",
+      "id": "4324d1d7-6ab6-44b9-9adf-4aad1886c5d5",
       "name": "Editor",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -16064,
-        5216
+        -576,
+        480
       ]
     },
     {
@@ -909,18 +918,18 @@
           "reasoningEffort": "medium"
         }
       },
-      "id": "c1776642-90f2-479b-851f-dc057c5df1c4",
+      "id": "1a626bf6-7365-4c74-b963-f1808f8cb364",
       "name": "Editor Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -16048,
-        5440
+        -560,
+        704
       ],
       "credentials": {
         "openAiApi": {
           "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
-          "name": "OpenAI account (add your key)"
+          "name": "OpenAI account"
         }
       }
     },
@@ -929,13 +938,13 @@
         "jsonSchemaExample": "{\"post\":\"string\",\"hashtags\":[\"#Example\"]}",
         "autoFix": true
       },
-      "id": "b1fadc14-75fc-4fb2-b87e-763306dfed04",
+      "id": "89c12811-7da7-49e9-a188-26476427a9d0",
       "name": "Editor Schema",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        -15920,
-        5440
+        -432,
+        704
       ]
     },
     {
@@ -988,13 +997,13 @@
         },
         "options": {}
       },
-      "id": "7138ba95-7947-4f89-b176-8c4400dfda5f",
+      "id": "2066171c-5ece-439e-8d42-539d1a16c7cc",
       "name": "Finalize (Edited)",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        -15616,
-        5296
+        -128,
+        560
       ]
     },
     {
@@ -1006,13 +1015,13 @@
           "systemMessage": "You are a precise LinkedIn editor. Return the corrected post and hashtags only. Do not over-rewrite."
         }
       },
-      "id": "ff54ee8b-637f-4c28-837f-5a5c4ca797ff",
+      "id": "2c7dd6d0-0a58-47e7-a492-7f077a233ea8",
       "name": "Final Optimizer",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -17312,
-        5392
+        -1824,
+        656
       ]
     },
     {
@@ -1027,18 +1036,18 @@
           "reasoningEffort": "low"
         }
       },
-      "id": "47cc607f-220c-4a80-9cdf-481bb98d5854",
+      "id": "c42af4a7-af90-45ce-99d2-e099f4e69e5d",
       "name": "Optimizer Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -17312,
-        5600
+        -1824,
+        864
       ],
       "credentials": {
         "openAiApi": {
           "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
-          "name": "OpenAI account (add your key)"
+          "name": "OpenAI account"
         }
       }
     },
@@ -1047,13 +1056,13 @@
         "jsonSchemaExample": "{\"post\":\"string\",\"hashtags\":[\"#Example\"]}",
         "autoFix": true
       },
-      "id": "92a4da05-4e36-4afd-bc8b-878ee99885cd",
+      "id": "4f6f60a3-da60-42aa-b109-8290f6aa10ad",
       "name": "Optimizer Schema",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        -17120,
-        5600
+        -1632,
+        864
       ]
     },
     {
@@ -1106,13 +1115,13 @@
         },
         "options": {}
       },
-      "id": "bdf420ea-2f52-4ef3-81ab-fe0531b34045",
+      "id": "f3062ae9-ba07-4335-a843-b6bf1951191d",
       "name": "Finalize (Optimized)",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        -16960,
-        5392
+        -1472,
+        656
       ]
     },
     {
@@ -1136,13 +1145,13 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "0f88dc9b-ce2d-4f7d-b0db-4447a41d463a",
+      "id": "9488997f-b341-4667-9e4f-69360c210466",
       "name": "Generation Failed",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        -17536,
-        5520
+        -2048,
+        784
       ]
     },
     {
@@ -1165,13 +1174,13 @@
         },
         "options": {}
       },
-      "id": "e8ec7c88-800e-4658-9709-3984c029823d",
+      "id": "bae04337-d51f-40f8-8dd6-728a4a6415e8",
       "name": "No Research",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        -19120,
-        5712
+        -3632,
+        976
       ]
     },
     {
@@ -1195,34 +1204,29 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "c8b3e76c-9bc1-4b38-a191-89d7b3f609d7",
+      "id": "62ae04e6-72e0-4b7c-a277-f53b85ba5d53",
       "name": "Validation Failed",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        -19904,
-        5920
-      ]
-    },
-    {
-      "parameters": {
-        "resume": "webhook",
-        "options": {
-          "webhookSuffix": "=approval"
-        }
-      },
-      "id": "b1f0a001-approval-wait-0001-000000000001",
-      "name": "Approval Wait",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        -16336,
-        5008
+        -4416,
+        1184
       ]
     }
   ],
   "pinData": {},
   "connections": {
+    "LinkedIn Content Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Validate Input": {
       "main": [
         [
@@ -1536,7 +1540,18 @@
       "main": [
         [
           {
-            "node": "Approval Telegram",
+            "node": "Approval Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval Wait": {
+      "main": [
+        [
+          {
+            "node": "Approval Action",
             "type": "main",
             "index": 0
           }
@@ -1728,18 +1743,7 @@
         ]
       ]
     },
-    "LinkedIn Content Webhook": {
-      "main": [
-        [
-          {
-            "node": "Validate Input",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Approval Telegram": {
+    "Approval Gmail": {
       "main": [
         [
           {
@@ -1749,27 +1753,19 @@
           }
         ]
       ]
-    },
-    "Approval Wait": {
-      "main": [
-        [
-          {
-            "node": "Approval Action",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
+  "versionId": "8c6f5a3b-a600-4e9a-a7dd-e37995ad4d3d",
   "meta": {
-    "templateCredsSetupCompleted": false
+    "templateCredsSetupCompleted": true,
+    "instanceId": "41fb7848eabb40ca905600cf5c8c37e75ba27a84190f2af367121151ad1be59c"
   },
   "nodeGroups": [],
+  "id": "qPlL0Eb9TwOouCB3",
   "tags": []
 }

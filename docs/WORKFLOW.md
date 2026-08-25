@@ -40,19 +40,19 @@ Every agent node (`Content Strategist`, `Research`, `Post Generator`,
 own `lmChatOpenAi` model node and a matching structured-output schema, so
 each step returns predictable JSON instead of free text.
 
-## 3. Human approval — Telegram
+## 3. Human approval — Gmail
 
 This is the gate before anything goes live.
 
 - **`Current Content`** snapshots the current draft, image, hashtags, etc.
   into one clean object.
-- **`Approval Telegram`** sends that snapshot as a Telegram photo message
-  with the caption (post text + hashtags) and three inline buttons:
-  **✅ Approve & Publish**, **🔄 Regenerate**, **✏️ Edit**.
-- **`Approval Wait`** pauses the execution right after the message is sent,
-  and hands the Telegram node a unique resume URL
+- **`Approval Gmail`** (this node used to be `Approval Telegram`) emails
+  that snapshot to the address set in its `sendTo` field — an HTML message
+  with the post text and three buttons: **Approve**, **Regenerate**, **Edit**.
+- **`Approval Wait`** pauses the execution right after the email is sent,
+  and hands the Gmail node a unique resume URL
   (`{{ $execution.resumeUrl }}`) — each button links to that URL with a
-  different `?action=` value. Tapping a button in Telegram resumes the
+  different `?action=` value. Clicking a button in the email resumes the
   paused workflow with that query param.
 - **`Approval Action`** (a Switch) reads `$json.query.action` and routes:
   - `approve` → straight to publishing
@@ -61,11 +61,11 @@ This is the gate before anything goes live.
     feedback text carried in the button's URL, then **`Final Optimizer`**
     gives it one more pass before publishing
 
-> **Known limitation:** Telegram inline buttons can't carry free-typed text.
-> The "Edit" button ships with a fixed instruction
+> **Known limitation:** email buttons can't carry free-typed text. The
+> "Edit" button ships with a fixed instruction
 > (*"Improve the hook and tighten the language"*) baked into its URL. If you
-> want to type custom edit notes from Telegram itself, that needs a Telegram
-> Trigger node listening for replies — happy to extend it, just ask.
+> want to type custom edit notes from your inbox itself, that needs an IMAP
+> or Gmail trigger node polling for replies — happy to extend it, just ask.
 
 ## 4. Publish
 

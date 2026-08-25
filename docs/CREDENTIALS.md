@@ -20,19 +20,18 @@ Used by: `Strategy Model`, `Research Model`, `Post Model`, `Concept Model`,
    credential from the dropdown (n8n will prompt you for most of these
    automatically on import since the placeholder ID won't resolve).
 
-## 2. Telegram bot (for approvals)
+## 2. Gmail (for approvals)
 
-1. Message **@BotFather** on Telegram → `/newbot` → follow the prompts →
-   copy the bot token.
-2. In n8n: **Credentials → Add Credential → Telegram API** → paste the token.
-3. Open the **`Approval Telegram`** node and select this credential.
-4. Get your chat ID: message your new bot once, then visit
-   `https://api.telegram.org/bot<TOKEN>/getUpdates` and read `chat.id` from
-   the response.
-5. In n8n, go to **Settings → Variables** and add `TELEGRAM_APPROVAL_CHAT_ID`
-   with that value (the workflow reads it via `$vars.TELEGRAM_APPROVAL_CHAT_ID`
-   in the `Approval Telegram` node) — or just replace that expression in the
-   node with your chat ID directly.
+1. In n8n: **Credentials → Add Credential → Gmail OAuth2 API** and complete
+   Google's OAuth flow (the credential screen links to the Google Cloud
+   Console and lists the exact scopes/redirect URL to use).
+2. Open the **`Approval Gmail`** node (this is the node that used to be
+   `Approval Telegram`) and select this credential.
+3. In that same node, set **`sendTo`** to the email address that should
+   receive and approve drafts.
+4. That's it — the node emails the draft with **Approve / Regenerate / Edit**
+   links built from `{{ $execution.resumeUrl }}`; clicking one resumes the
+   paused workflow with that action, same as the old Telegram buttons did.
 
 ## 3. LinkedIn
 
