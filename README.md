@@ -1,14 +1,26 @@
 # AI LinkedIn Content Manager
 
-An n8n workflow that turns a short brief (topic, category, audience) into a
-researched, written, and image-illustrated LinkedIn post — held for human
-approval over Gmail before it publishes.
+**Simple explanation:** A tool that helps you create LinkedIn posts automatically. You just tell it what topic you want to write about, who you want to reach, and the AI will write a complete post, find a picture for it, and send it to you for approval via email before posting.
 
+**Who should use this?**
+- LinkedIn content creators who want to post regularly but save time writing
+- Business owners who need fresh content but don't have a dedicated writer
+- Marketers managing multiple LinkedIn accounts
+- Anyone who wants professional-looking posts without the writing effort
+
+**How it works:**
+1. You fill out a quick form with your topic and details
+2. AI researches and writes a professional post
+3. AI finds and adds a relevant image
+4. You get an email asking for approval
+5. Approve it and it publishes to LinkedIn automatically
+
+**The workflow flow:**
 ```
-Wire Ticket (site/)  --POST-->  Webhook  -->  Validate  -->  Strategy
-                                                                 |
-                                                                 v
-                              Publish <-- Approval (Gmail) <-- Research -> Draft -> Review -> Image
+You submit topic (site/)  -->  AI researches  -->  AI writes post  -->  AI finds image
+                                                            |
+                                                            v
+                         Publishes <-- You approve (via Gmail) <-- Review
 ```
 
 **Repo contents:**
